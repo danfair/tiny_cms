@@ -3,7 +3,7 @@
 	require_once("../includes/functions.php");
 	generate_header();
 ?>
-<div name="contentarea" class="row-fluid" style="background-color:white; padding-top:10px;">
+<div name="contentarea" class="row-fluid" style="background-color:white; padding:10px 0;">
 <?php
 	generate_sidebar();
 ?>

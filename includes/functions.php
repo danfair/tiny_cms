@@ -1,5 +1,11 @@
 <?php
 
+function redirect_to($new_location) 
+{
+    header("Location: " . $new_location);
+    exit;
+}
+
 function generate_header() 
 {
 	global $connection;
@@ -46,7 +52,6 @@ function generate_header()
 		echo $item["name"] . "</a></li>";
 	}
 	echo "</ul></div></nav>";
-
 }
 
 function generate_footer() 
@@ -83,7 +88,7 @@ function generate_sidebar()
 
 	echo "<div class='span3 pull-left well' style='margin-left: 10px;'>";
 	echo "<ul class='nav nav-list'>";
-	echo "<h3>Categories</h3>";
+	echo "<h3>Post Categories</h3>";
 	
 	$query = "SELECT * ";
 	$query .= "FROM categories ";
@@ -105,7 +110,6 @@ function generate_sidebar()
 // creates an unfiltered post listing on page
 function find_all_post_info() 
 {
-
 	global $connection;
 
 	$query = "SELECT * ";
@@ -113,6 +117,20 @@ function find_all_post_info()
 	$query .= "LEFT JOIN categories ";
 	$query .= "ON (posts.category_id = categories.category_id) ";
 	$query .= "ORDER BY date DESC";
+	$result = mysqli_query($connection, $query);
+	return $result;
+}
+
+function find_specific_post_info($post_id)
+{
+	global $connection;
+
+	$query = "SELECT * ";
+	$query .= "FROM posts ";
+	$query .= "LEFT JOIN categories ";
+	$query .= "ON (posts.category_id = categories.category_id) ";
+	$query .= "WHERE post_id = {$post_id} ";
+	$query .= "LIMIT 1";
 	$result = mysqli_query($connection, $query);
 	return $result;
 }
@@ -146,10 +164,9 @@ function generate_post_listing($category = 0) {
 	while ($row = mysqli_fetch_assoc($result))
 	{ 
 		echo "<h4>" . $row["title"] . "</h4>";
-		echo "<p><strong>By " . $row["author"] . "</strong></p>"; 
+		echo "<p><strong>By " . $row["author"] . "</strong> | " . $row["date"] . "</p>"; 
 		echo "<p>" . $row["body"] . "&nbsp;&nbsp;<a href=\"index.php?category=" . $row["category_id"] . "\"><span class=\"label\">" . $row["name"] . "</span></a></p>"; 
-		echo "<button class=\"btn btn-mini btn-primary\" type=\"button\" style=\"margin-bottom: 15px;\">See this post</button>";
-
+		echo "<a href=\"post.php?post_id=" . $row["post_id"] . "\"><button class=\"btn btn-mini btn-primary\" type=\"button\" style=\"margin-bottom: 15px;\">See this post</button></a>";
 	}
 }
 
@@ -164,5 +181,87 @@ function find_category_info($category)
 	$query .= "LIMIT 1";
 	$result = mysqli_query($connection, $query);
 	return $result;
+}
+
+function generate_recent_posts_sidebar() 
+{
+	
+	global $connection;
+
+	echo "<div class='span3 pull-left well' style='margin-left: 10px;'>";
+	echo "<ul class='nav nav-list'>";
+	echo "<h4>Recent Posts</h4>";
+	
+	$query = "SELECT * ";
+	$query .= "FROM posts ";
+	$query .= "ORDER BY date DESC";
+	$post_set = mysqli_query($connection, $query);
+	$counter = 0;
+	while ($row = mysqli_fetch_assoc($post_set))
+	{ 
+		echo "<li>";
+		echo "<a href=\"post.php?post=" . $row["post_id"] . "\">"; 
+		echo $row["title"] . "</a>";
+		echo "By " . $row["author"] . "<br />";
+		echo $row["date"] . "</li><br />";
+		$counter++;
+		if ($counter > 4) 
+		{
+			break;
+		}
+	}
+	echo "</ul></div>"; // end of recent posts sidebar
+}
+
+function generate_category_select_list ($category = "Java") 
+{
+	global $connection;
+
+	$query = "SELECT * ";
+	$query .= "FROM categories ";
+	$result = mysqli_query($connection, $query);
+	while ($row = mysqli_fetch_assoc($result))
+	{
+		echo "<option";
+		if ($category == $row["name"]) 
+			{ 
+				echo " selected"; 
+			}
+		echo ">";
+		echo $row["name"];
+		echo "</option>";
+	}
+}
+
+function generate_author_select_list ($author = "Togi Mullany") 
+{
+	global $connection;
+
+	$query = "SELECT DISTINCT author ";
+	$query .= "FROM posts ";
+	$result = mysqli_query($connection, $query);
+	while ($row = mysqli_fetch_assoc($result))
+	{
+		echo "<option";
+		if ($author == $row["author"]) 
+		{ 
+			echo " selected"; 
+		}
+		echo ">";
+		echo $row["author"];
+		echo "</option>";
+	}
+}
+
+function get_category_id_with_category_name ($category_name)
+{
+	global $connection;
+
+	$query = "SELECT * FROM categories ";
+	$query .= "WHERE name = '{$category_name}' ";
+	$query .= "LIMIT 1";
+	$result = mysqli_query($connection, $query);
+	$row = mysqli_fetch_assoc($result);
+	return $row["category_id"];
 }
 ?>
